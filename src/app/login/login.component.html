@@ -1,0 +1,55 @@
+<div class="login-container">
+  <div class="login-left">
+    <!-- Centered image -->
+    <img src="assets/images/hitachi logo.png" alt="Welcome Image" class="welcome-image" />
+  </div>
+
+  <div class="login-right">
+    <div class="logo-container">
+      <!-- SBI logo -->
+      <img src="assets/images/sbi.png" alt="SBI Logo" class="sbi-logo" />
+    </div>
+    
+    <!-- Form content -->
+    <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
+      <div class="form-group">
+        <label for="username" class="form-label">Username:</label>
+        <input id="username" name="username" [(ngModel)]="username" required class="form-control" />
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Password:</label>
+        <input id="password" name="password" [(ngModel)]="password" type="password" required class="form-control" />
+        <a [routerLink]="['/forgotpassword']" class="forgot-password-link">Forgot password?</a>
+      </div>
+
+      <!-- ✅ Show error message in form (not popup) for all errors except Contact Administrator -->
+      <div *ngIf="errorMessage && !showPopup" class="error-message">
+        {{ errorMessage }}
+      </div>
+
+      <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+        <span *ngIf="isLoading" class="btn-spinner"></span>
+        <span>{{ isLoading ? 'Logging in...' : 'Login' }}</span>
+      </button>
+    </form>
+
+    <!-- Footer -->
+    <footer class="footer">
+      Powered by
+      <span class="build">Build</span>
+      <span class="int">INT</span>
+    </footer>
+  </div>
+</div>
+
+<!-- ✅ Popup ONLY for "Contact Administrator" errors -->
+<div *ngIf="showPopup && errorMessage" class="popup-overlay">
+  <div class="popup">
+    <p>
+      <b>Account Locked</b><br />
+      {{ errorMessage }}
+    </p>
+    <button (click)="closePopup()" class="btn btn-danger">Close</button>
+  </div>
+</div>

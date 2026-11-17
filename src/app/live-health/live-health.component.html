@@ -1,0 +1,395 @@
+<div class="container">
+  <div class="header">
+    <app-header [heading]="'Live Health App'"></app-header>
+  </div>
+
+  <div class="main-container">
+    <!-- SIDE NAV -->
+    <div class="side-nav">
+      <app-sidebar></app-sidebar>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main">
+
+      <!-- PAGE TITLE -->
+      <div class="page-header d-flex justify-content-between align-items-center" style="margin-top: 0; margin-bottom: 8px; padding: 8px 12px;">
+        <h3 class="text-primary mb-0">Vendor Health Status</h3>
+        <div class="d-flex align-items-center gap-3">
+          <div class="cache-info" *ngIf="cacheInfo">
+            <small class="text-muted">
+             
+             
+            </small>
+          </div>
+          <button class="btn btn-sm btn-success" 
+                  (click)="refreshData()" 
+                  [disabled]="loading"
+                  title="Fetch fresh data bypassing cache">
+            <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i> 
+            {{ loading ? 'Loading...' : 'Refresh' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- TABLE WRAPPER -->
+      <div class="table-container">
+
+        <!-- TABLE LOADER -->
+        <div class="table-loader text-center py-5" *ngIf="loading">
+          <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-3">Loading vendor health data...</p>
+        </div>
+
+        <!-- SUMMARY CARDS -->
+        <div *ngIf="!loading && summaryData" class="summary-section">
+          <div class="summary-grid">
+            <div class="card health-kpi-card total-vendors">
+              <div class="card-body">
+                <h5>{{ summaryData.totalVendors }}</h5>
+                <p>Total Vendors</p>
+                <small>{{ summaryData.availableVendors }} reporting</small>
+              </div>
+            </div>
+            <div class="card health-kpi-card total-atms">
+              <div class="card-body">
+                <h5>{{ summaryData.totalAtms }}</h5>
+                <p>Total ATMs</p>
+                <small>Sum of reporting vendor totals</small>
+              </div>
+            </div>
+            <div class="card health-kpi-card online-atms">
+              <div class="card-body">
+                <h5>{{ summaryData.totalOnline }}</h5>
+                <p>Online ATMs</p>
+                <small>Current vendor-reported status</small>
+              </div>
+            </div>
+            <div class="card health-kpi-card offline-atms">
+              <div class="card-body">
+                <h5>{{ summaryData.totalOffline }}</h5>
+                <p>Offline ATMs</p>
+                <small>Current vendor-reported status</small>
+              </div>
+            </div>
+            <div class="card health-kpi-card overall-health"
+                 title="Online ATMs divided by online plus offline ATMs; excludes unknown API statuses">
+              <div class="card-body">
+                <h5>{{ summaryData.overallHealthPercentage }}%</h5>
+                <p>Overall Health</p>
+                <small>Online ÷ known online/offline</small>
+              </div>
+            </div>
+            <div class="card health-kpi-card missing-db">
+              <div class="card-body">
+                <h5>{{ summaryData.totalMissingInDb }}</h5>
+                <p>Missing in DB</p>
+                <small>Present in vendor API only</small>
+              </div>
+            </div>
+            <div class="card health-kpi-card missing-api">
+              <div class="card-body">
+                <h5>{{ summaryData.totalMissingInApi }}</h5>
+                <p>Missing in API</p>
+                <small>Present in database only</small>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="summaryData.failedVendors > 0" class="partial-data-warning" role="status">
+            <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+            Partial totals: {{ summaryData.availableVendors }} of {{ summaryData.totalVendors }} vendor APIs responded.
+            Unavailable vendors are excluded from the totals below.
+          </div>
+        </div>
+
+        <!-- VENDOR STATUS TABLE -->
+        <table class="table table-bordered table-hover" 
+               *ngIf="!loading && healthData.length > 0">
+          <thead class="table-dark">
+            <tr>
+              <th>Vendor</th>
+              <th>Total ATMs</th>
+              <th>Online</th>
+              <th>Offline</th>
+              <th>Missing in API</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let vendor of healthData">
+              <td>
+                <strong>{{ vendor.vendor_name }}</strong>
+                <small *ngIf="!isVendorAvailable(vendor)" class="vendor-api-error">API unavailable</small>
+              </td>
+              <td>{{ isVendorAvailable(vendor) ? vendor.total_count : '—' }}</td>
+              <td>
+                <span *ngIf="isVendorAvailable(vendor)" class="badge bg-success">{{ vendor.online_count }}</span>
+                <span *ngIf="!isVendorAvailable(vendor)" class="text-muted">—</span>
+              </td>
+              <td>
+                <span *ngIf="isVendorAvailable(vendor)" class="badge bg-danger">{{ vendor.offline_count }}</span>
+                <span *ngIf="!isVendorAvailable(vendor)" class="text-muted">—</span>
+              </td>
+              <td>
+                <span class="badge bg-info" 
+                      *ngIf="isVendorAvailable(vendor) && vendor.missing_in_api_count > 0"
+                      style="cursor: pointer"
+                      (click)="openMissingModal(vendor, 'api')"
+                      title="Click to view ATM IDs">
+                  {{ vendor.missing_in_api_count }}
+                </span>
+                <span *ngIf="isVendorAvailable(vendor) && vendor.missing_in_api_count === 0">-</span>
+                <span *ngIf="!isVendorAvailable(vendor)" class="text-muted">—</span>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-info"
+                        (click)="openBreakdownModal(vendor)"
+                        title="View breakdown by category"
+                        [disabled]="vendor.total_count === 0 || !isVendorAvailable(vendor)">
+                  <i class="fas fa-chart-pie"></i> View Breakdown
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- NO DATA MESSAGE -->
+        <div class="no-data text-center py-4" *ngIf="!loading && healthData.length === 0">
+          <h5 class="text-muted">No vendor data available</h5>
+          <p class="text-muted">Please check your API configuration or try refreshing</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MISSING DATA MODAL -->
+<div class="modal fade" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'" 
+     tabindex="-1" role="dialog" *ngIf="showModal">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ selectedVendor?.vendor_name }} - 
+          <span *ngIf="modalType === 'db'" class="text-warning">Missing in Database ({{ selectedVendor?.missing_in_db?.length || 0 }})</span>
+          <span *ngIf="modalType === 'api'" class="text-info">Missing in API ({{ selectedVendor?.missing_in_api?.length || 0 }})</span>
+          <span *ngIf="modalType === 'all'" class="text-primary">All ATMs ({{ selectedVendor?.total_count || 0 }})</span>
+          <span *ngIf="modalType === 'breakdown'" class="text-success">Data Breakdown</span>
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModal()" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" *ngIf="modalType !== 'breakdown'">
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped table-sm">
+            <thead class="table-dark">
+              <tr>
+                <th>#</th>
+                <th>ATM ID</th>
+                <th>Site Name</th>
+                <th>City</th>
+                <th>State</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let atm of getModalData(); let i = index">
+                <td>{{ i + 1 }}</td>
+                <td><strong>{{ atm.atm_id }}</strong></td>
+                <td>{{ atm.unit_name || 'N/A' }}</td>
+                <td>{{ atm.city || 'N/A' }}</td>
+                <td>{{ atm.state || 'N/A' }}</td>
+                <td>
+                  <span class="badge" 
+                        [class]="modalType === 'db' ? 'bg-warning text-dark' : 
+                                 modalType === 'api' ? 'bg-info' : 
+                                 (atm.site_status === 'ONLINE' || atm.site_status === 'online') ? 'bg-success' : 'bg-danger'">
+                    {{ atm.site_status || 'N/A' }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="text-muted mt-2" *ngIf="getModalData().length === 0">
+            <em>No ATMs found.</em>
+          </div>
+        </div>
+      </div>
+
+      <!-- BREAKDOWN VIEW -->
+      <div class="modal-body" *ngIf="modalType === 'breakdown'">
+        <div class="accordion" id="breakdownAccordion">
+          
+          <!-- Matched ATMs Section -->
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingMatched">
+              <button class="accordion-button" [class.collapsed]="!accordionSections.matched" 
+                      type="button" (click)="toggleAccordion('matched')" 
+                      [attr.aria-expanded]="accordionSections.matched">
+                <strong>Matched ATMs (In Both DB & API)</strong> 
+                <span class="badge bg-success ms-2">{{ selectedVendor?.total_count || 0 }}</span>
+                <span class="ms-3 text-muted">Online: {{ selectedVendor?.online_count || 0 }} | Offline: {{ selectedVendor?.offline_count || 0 }}</span>
+              </button>
+            </h2>
+            <div class="accordion-collapse collapse" [class.show]="accordionSections.matched" 
+                 [attr.aria-labelledby]="'headingMatched'">
+              <div class="accordion-body">
+                <div class="mb-2 text-end">
+                  <button class="btn btn-sm btn-success" (click)="downloadExcel('matched')">
+                    <i class="fas fa-file-excel"></i> Download Excel
+                  </button>
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-bordered table-striped table-sm">
+                    <thead class="table-success">
+                      <tr>
+                        <th>#</th>
+                        <th>ATM ID</th>
+                        <th>Site Name</th>
+                        <th>City</th>
+                        <th>State</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let atm of getMatchedAtms(); let i = index">
+                        <td>{{ i + 1 }}</td>
+                        <td><strong>{{ atm.atm_id }}</strong></td>
+                        <td>{{ atm.unit_name || 'N/A' }}</td>
+                        <td>{{ atm.city || 'N/A' }}</td>
+                        <td>{{ atm.state || 'N/A' }}</td>
+                        <td>
+                          <span class="badge" 
+                                [class]="(atm.site_status === 'ONLINE' || atm.site_status === 'online') ? 'bg-success' : 'bg-danger'">
+                            {{ atm.site_status || 'N/A' }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Missing in DB Section -->
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingMissingDB">
+              <button class="accordion-button" [class.collapsed]="!accordionSections.missingDB" 
+                      type="button" (click)="toggleAccordion('missingDB')" 
+                      [attr.aria-expanded]="accordionSections.missingDB">
+                <strong>Missing in Database (In API Only)</strong> 
+                <span class="badge bg-warning text-dark ms-2">{{ selectedVendor?.missing_in_db_count || 0 }}</span>
+              </button>
+            </h2>
+            <div class="accordion-collapse collapse" [class.show]="accordionSections.missingDB" 
+                 [attr.aria-labelledby]="'headingMissingDB'">
+              <div class="accordion-body">
+                <div class="mb-2 text-end" *ngIf="selectedVendor?.missing_in_db?.length > 0">
+                  <button class="btn btn-sm btn-warning" (click)="downloadExcel('missing_db')">
+                    <i class="fas fa-file-excel"></i> Download Excel
+                  </button>
+                </div>
+                <div class="table-responsive" *ngIf="selectedVendor?.missing_in_db?.length > 0">
+                  <table class="table table-bordered table-striped table-sm">
+                    <thead class="table-warning">
+                      <tr>
+                        <th>#</th>
+                        <th>ATM ID</th>
+                        <th>Site Name</th>
+                        <th>City</th>
+                        <th>State</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let atm of selectedVendor?.missing_in_db; let i = index">
+                        <td>{{ i + 1 }}</td>
+                        <td><strong>{{ atm.atm_id }}</strong></td>
+                        <td>{{ atm.unit_name || 'N/A' }}</td>
+                        <td>{{ atm.city || 'N/A' }}</td>
+                        <td>{{ atm.state || 'N/A' }}</td>
+                        <td>
+                          <span class="badge bg-warning text-dark">
+                            {{ atm.site_status || 'N/A' }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="text-muted" *ngIf="selectedVendor?.missing_in_db?.length === 0">
+                  <em>No ATMs missing in database.</em>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Missing in API Section -->
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingMissingAPI">
+              <button class="accordion-button" [class.collapsed]="!accordionSections.missingAPI" 
+                      type="button" (click)="toggleAccordion('missingAPI')" 
+                      [attr.aria-expanded]="accordionSections.missingAPI">
+                <strong>Missing in API (In DB Only)</strong> 
+                <span class="badge bg-info ms-2">{{ selectedVendor?.missing_in_api_count || 0 }}</span>
+              </button>
+            </h2>
+            <div class="accordion-collapse collapse" [class.show]="accordionSections.missingAPI" 
+                 [attr.aria-labelledby]="'headingMissingAPI'">
+              <div class="accordion-body">
+                <div class="mb-2 text-end" *ngIf="selectedVendor?.missing_in_api?.length > 0">
+                  <button class="btn btn-sm btn-info" (click)="downloadExcel('missing_api')">
+                    <i class="fas fa-file-excel"></i> Download Excel
+                  </button>
+                </div>
+                <div class="table-responsive" *ngIf="selectedVendor?.missing_in_api?.length > 0">
+                  <table class="table table-bordered table-striped table-sm">
+                    <thead class="table-info">
+                      <tr>
+                        <th>#</th>
+                        <th>ATM ID</th>
+                        <th>Site Name</th>
+                        <th>City</th>
+                        <th>State</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let atm of selectedVendor?.missing_in_api; let i = index">
+                        <td>{{ i + 1 }}</td>
+                        <td><strong>{{ atm.atm_id }}</strong></td>
+                        <td>{{ atm.unit_name || 'N/A' }}</td>
+                        <td>{{ atm.city || 'N/A' }}</td>
+                        <td>{{ atm.state || 'N/A' }}</td>
+                        <td>
+                          <span class="badge bg-info">
+                            {{ atm.site_status || 'N/A' }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="text-muted" *ngIf="selectedVendor?.missing_in_api?.length === 0">
+                  <em>No ATMs missing in API.</em>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal backdrop -->
+<div class="modal-backdrop fade" [class.show]="showModal" *ngIf="showModal" 
+     (click)="closeModal()"></div>

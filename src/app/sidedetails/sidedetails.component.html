@@ -1,0 +1,125 @@
+<div class="container">
+  <div class="loader" *ngIf="isLoading">
+    <p>Loading...</p>
+  </div>
+  <div class="header">
+    <app-header [heading]="'Site Details'"></app-header>
+  </div>
+  <div *ngIf="!isLoading">
+  <div class="main-container">
+    <div class="side-nav">
+      <app-sidebar></app-sidebar>
+    </div>
+    <div class="main">
+    
+
+      <div class="row">
+        <!-- Card 1 -->
+        <div class="card">
+          <div class="card-body">
+            <div class="card-content">
+              <h4 class="card-title">Total Locations</h4>
+              <div class="card-info">
+                <p class="card-count">{{ siteList.length }}</p>
+                <i class="fas fa-map-marker-alt total-icon"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Card 2 -->
+        <div class="card">
+          <div class="card-body">
+            <div class="card-content">
+              <h4 class="card-title">Online</h4>
+              <div class="card-info">
+                <p class="card-count">{{ onlineCount }}</p>
+                <i class="fas fa-map-marker-alt online-icon"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Card 3 -->
+        <div class="card">
+          <div class="card-body">
+            <div class="card-content">
+              <h4 class="card-title">Offline</h4>
+              <div class="card-info">
+                <p class="card-count">{{ offlineCount }}</p>
+                <i class="fas fa-map-marker-alt offline-icon"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="site-list-header">
+          <h3>Site List</h3>
+          <span class="black-text">{{ lhoName }}</span>
+          <input type="text" class="search-bar" placeholder="Search..." [(ngModel)]="searchTerm" />
+          <!-- <button class="download-button" (click)="downloadSiteList()">Download</button> -->
+          <!-- <button class="add-button-dark" (click)="openAddModal()">Add New Site</button> -->
+        </div>
+
+
+        <!-- Pagination Information -->
+        <div class="pagination-info">
+          Page-Item {{ startItem }}-{{ endItem }}
+        </div>
+      </div>
+
+      <!-- Table with Filtered Data -->
+      <div class="row">
+        <div class="card1">
+          <table class="site-list-table">
+            <thead>
+              <tr>
+                <th>ATM Latest</th>
+                <th>ATM 1</th>
+                <th>ATM 2</th>
+                <th>ATM 3</th>
+                <th>ATM 4</th>
+                <th>ATM 5</th>
+                <th>Site Name</th>
+                <th>City</th>
+                <th>
+                  <select id="stateFilter" [(ngModel)]="selectedState" (change)="applyFilters()">
+                    <option value="">States</option>
+                    <option *ngFor="let state of uniqueStates" [value]="state">{{ state }}</option>
+                  </select>
+                </th>
+                <th>
+                  <select id="statusFilter" [(ngModel)]="selectedStatus" (change)="applyFilters()">
+                    <option value="">Status</option>
+                    <option *ngFor="let status of uniqueStatuses" [value]="status">{{ status }}</option>
+                  </select>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let site of filteredSites()" class="clickable-row" (click)="navigateToDetails(site)">
+                <td>{{ site.atm_latest || site.ATM_ID }}</td>
+                <td>{{ site.atm_1 || '-' }}</td>
+                <td>{{ site.atm_2 || '-' }}</td>
+                <td>{{ site.atm_3 || '-' }}</td>
+                <td>{{ site.atm_4 || '-' }}</td>
+                <td>{{ site.atm_5 || '-' }}</td>
+                <td>{{ site.unitname }}</td>
+                <td>{{ site.city }}</td>
+                <td>{{ site.state }}</td>
+                <td>{{ site.SiteStatus }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div class="pagination-controls">
+        <button (click)="previousPage()" [disabled]="currentPage === 1">Previous</button>
+        <span>Page {{ currentPage }}</span>
+        <button (click)="nextPage()" [disabled]="currentPage * itemsPerPage >= siteList.length">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>

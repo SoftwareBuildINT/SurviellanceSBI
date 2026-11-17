@@ -1,0 +1,415 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-top: 50px;
+
+    .header {
+      position: fixed;
+      width: 100%;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      background-color: white;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .main-container {
+      display: flex;
+      margin-top: 50px;
+      padding-right: calc(var(--bs-gutter-x) * 0.5);
+      padding-left: calc(var(--bs-gutter-x) * 0.5);
+      margin-left: 210px;
+
+      .main {
+        flex-grow: 1;
+        padding: 1rem;
+
+        .add-button {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+
+            .search-input {
+              width: min(280px, 100%);
+              border-radius: 10px;
+              padding: 8px 15px;
+              border: 1px solid #ced4da;
+              transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+              &:focus {
+                border-color: #86b7fe;
+                box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.18);
+                outline: none;
+              }
+            }
+
+            .oval-button {
+              border-radius: 10px;
+              padding: 8px 20px;
+              font-weight: 500;
+              white-space: nowrap;
+            }
+        }
+
+        .card-body {
+          padding: 1.5rem;
+
+          .row {
+            margin-bottom: 1.5rem;
+          }
+
+          .oval-button {
+            border-radius: 25px;
+            padding: 0.5rem 1rem;
+            margin-left: 200px;
+          }
+        }
+
+        .table {
+          width: 100%;
+          margin-top: 1.5rem;
+
+          thead {
+            background-color: #f8f9fa;
+          }
+
+          th, td {
+            text-align: left;
+            padding: 0.75rem;
+          }
+        }
+
+        /* Excel / Export Buttons */
+        .export-button {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+
+            button {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+        }
+      }
+    }
+}
+
+/* Modal Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 1050;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+
+    &.show {
+      display: flex;
+    }
+
+    .modal-dialog {
+      max-width: 500px;
+      margin: 1.75rem auto;
+    }
+
+    .modal-content {
+      background-color: white;
+      border-radius: 0.3rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    .modal-header {
+      padding: 1rem;
+      border-bottom: 1px solid #dee2e6;
+
+      .modal-title {
+        margin: 0;
+      }
+
+      .close {
+        padding: 0.75rem;
+        background: none;
+        border: none;
+        font-size: 1.25rem;
+        cursor: pointer;
+      }
+    }
+
+    .modal-body {
+      padding: 1rem;
+    }
+
+    .modal-footer {
+      padding: 1rem;
+      border-top: 1px solid #dee2e6;
+
+      .btn {
+        border-radius: 0.25rem;
+        padding: 0.5rem 1rem;
+      }
+
+      .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+      }
+
+      .btn-danger {
+        background-color: #dc3545;
+        color: white;
+      }
+
+      .btn-success {
+        background-color: #28a745;
+        color: white;
+      }
+
+      .btn-primary {
+        background-color: #0d6efd;
+        color: white;
+      }
+    }
+}
+
+/* Icon Action Buttons (hover bg) */
+.table .btn {
+  border: none;
+  background: transparent; 
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+
+  i {
+    font-size: 18px;
+    pointer-events: none;
+  }
+
+  &:hover {
+    transform: translateY(-2px) scale(1.05);
+  }
+
+  &:after {
+    content: "";
+    position: absolute;
+    width: 180%;
+    height: 180%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    border-radius: 50%;
+    transition: transform 0.4s ease, opacity 0.6s ease;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &:active:after {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+tr.inactive-row {
+  opacity: 0.55;
+  background-color: #f8f8f8 !important;
+}
+
+.btn-primary:hover i {
+  color: #2563eb;
+}
+
+.btn-danger:hover i {
+  color: #ef4444;
+}
+
+.toast-message {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  color: #fff;
+  border-radius: 6px;
+  font-weight: 500;
+  z-index: 1055;
+  opacity: 0.95;
+  transition: all 0.5s ease;
+}
+
+.toast-message.success { background-color: #28a745; }
+.toast-message.danger { background-color: #dc3545; }
+
+.toast-message.hide { opacity: 0; transform: translateY(20px); }
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .main-container {
+        flex-direction: column;
+        margin-left: 0;
+        padding-top: 50px;
+    }
+
+    .side-nav {
+        width: 100%;
+        position: static;
+        box-shadow: none;
+    }
+
+    .main {
+        margin-top: 0;
+    }
+}
+
+@media (max-width: 767.98px) {
+  .container .main-container .main {
+    padding: 0.75rem;
+  }
+
+  .container .main-container .main .add-button {
+    flex-wrap: wrap;
+  }
+
+  .container .main-container .main .add-button .search-input {
+    width: 100%;
+  }
+
+}
+
+/* Polished table and action controls for User Management only. */
+.main .card {
+  border: 1px solid #e4eaf1;
+  border-radius: 12px;
+  box-shadow: 0 5px 18px rgba(31, 55, 80, 0.08);
+}
+
+.main .table {
+  overflow: hidden;
+  border-color: #e0e7ef;
+  border-radius: 9px;
+  color: #344054;
+  vertical-align: middle;
+
+  thead th {
+    padding: 0.9rem 0.8rem;
+    color: #fff;
+    background: #203b5d;
+    border-color: #203b5d;
+    font-size: 0.8rem;
+    font-weight: 650;
+    letter-spacing: 0.025em;
+    white-space: nowrap;
+  }
+
+  tbody td { padding: 0.85rem 0.8rem; }
+
+  tbody tr:nth-child(even) > * { background-color: #f4f7fb; }
+  tbody tr:hover > * { background-color: #eaf3ff; }
+
+  .btn {
+    min-width: 36px;
+    min-height: 34px;
+    padding: 6px 10px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    font-size: 0.82rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background-color 160ms ease, box-shadow 160ms ease,
+      transform 160ms ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(31, 55, 80, 0.18);
+    }
+
+    i { color: inherit; }
+
+    svg {
+      display: block;
+      width: 16px;
+      height: 16px;
+      flex: 0 0 16px;
+      overflow: visible;
+      color: currentColor;
+      opacity: 1;
+      visibility: visible;
+      pointer-events: none;
+    }
+  }
+
+  .btn.btn-primary {
+    color: #fff;
+    background: #0878d1;
+    border-color: #0878d1;
+  }
+
+  .btn.btn-primary:hover { color: #fff; background: #075fa5; }
+
+  .btn.btn-danger {
+    color: #fff;
+    background: #c93643;
+    border-color: #c93643;
+  }
+
+  .btn.btn-danger:hover { color: #fff; background: #a92632; }
+
+  .btn.btn-warning { color: #332600; }
+}
+
+.main .export-button .btn,
+.main .add-button .oval-button {
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(31, 55, 80, 0.12);
+  transition: transform 160ms ease, box-shadow 160ms ease,
+    background-color 160ms ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(31, 55, 80, 0.18);
+  }
+}
+
+.main .export-button .btn-success { background: #16834a; }
+.main .export-button .btn-info { background: #0878a8; }
+.main .export-button .btn-primary,
+.main .add-button .oval-button { background: #0878d1; }
+.main .export-button .btn-success:hover { background: #11683a; }
+.main .export-button .btn-info:hover { background: #066386; }
+.main .export-button .btn-primary:hover,
+.main .add-button .oval-button:hover { background: #075fa5; }
+
+.main .nav-tabs .nav-link {
+  color: #526277;
+  font-weight: 600;
+  border-radius: 8px 8px 0 0;
+}
+
+.main .nav-tabs .nav-link.active {
+  color: #0878d1;
+  background: #fff;
+  border-color: #dce5ef #dce5ef #fff;
+}

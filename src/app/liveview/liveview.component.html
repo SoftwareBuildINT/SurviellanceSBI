@@ -1,0 +1,147 @@
+<div class="container">
+  <!-- Header Section -->
+  <div class="header">
+    <app-header [heading]="'Live View'"></app-header>
+  </div>
+
+  <!-- Main Content Container -->
+  <div class="main-container">
+    <!-- Sidebar Section -->
+    <div class="side-nav">
+      <app-sidebar></app-sidebar>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main">
+      <div class="live-view">
+        <div class="back-button" (click)="goBack()">
+          <i class="fa fa-arrow-left" aria-hidden="true"></i>
+          Back
+        </div>
+        <button class="btn btn-primary screenshot-btn" (click)="downloadScreenshot()" title="Download Screenshot">
+          <i class="fa fa-download" style="margin-right: 0px;"></i>
+        </button>
+        <button class="btn btn-success refresh-btn" (click)="refreshStream()" title="Refresh Stream" [disabled]="isLoadingStream">
+          <i class="fa fa-refresh" [class.fa-spin]="isLoadingStream"></i>
+        </button>
+        <span class="cache-badge" *ngIf="isCachedData && loadTime > 0">
+          <i class="fa fa-bolt"></i> Cached ({{ loadTime }}ms)
+        </span>
+        <span class="cache-badge fresh" *ngIf="!isCachedData && loadTime > 0">
+          <i class="fa fa-cloud-download"></i> Fresh ({{ loadTime }}ms)
+        </span>
+        <style>
+          .screenshot-btn {
+            margin-bottom: 15px;
+            float: right;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            text-align: center;
+            align-items: center;
+            margin-left: 10px;
+            align-content: center;
+          }
+
+          .screenshot-btn i {
+            font-size: 18px;
+          }
+
+          .refresh-btn {
+            margin-bottom: 15px;
+            float: right;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-left: 10px;
+          }
+
+          .refresh-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+          }
+
+          .cache-badge {
+            display: inline-block;
+            float: right;
+            padding: 8px 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            margin-left: 10px;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+          }
+
+          .cache-badge.fresh {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: 0 2px 8px rgba(245, 87, 108, 0.3);
+          }
+
+          .cache-badge i {
+            margin-right: 5px;
+          }
+        </style>
+        <div class="row">
+          <div class="atm-details text-center">
+            <h4 class="atm-id">
+              <span class="bold">ATM ID:</span>
+              {{ atmId }}
+            </h4>
+            <h4 class="site-name">
+              <span class="bold">Site Name:</span>
+              {{ siteName }}
+            </h4>
+            <h6>
+              <input type="text" [(ngModel)]="searchTerm" (input)="filterAtmList()"
+                placeholder="Search for ATM ID..." />
+              <!-- Autocomplete suggestions for ATM -->
+              <ul *ngIf="filteredAtmList.length > 0" class="autocomplete-list">
+                <li *ngFor="let atm of filteredAtmList" (click)="selectAtm(atm)">
+                  {{ atm }}
+                </li>
+              </ul>
+            </h6>
+          </div>
+        </div>
+        <div class="loading-overlay" *ngIf="isLoadingStream">
+          <div class="loading-content">
+            <i class="fa fa-spinner fa-spin" style="font-size: 48px; color: #667eea;"></i>
+          <p>{{ vendorId === 3 ? 'Loading camera snapshots...' : 'Loading video streams...' }}</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="camera-view" *ngFor="let camera of [1, 2, 3, 4]; let i = index">
+            <div class="camera-label">Camera {{ i + 1 }}</div>
+            <div class="camera-frame">
+              <div class="camera-status" *ngIf="cameraStates[i] !== 'playing'">
+                <div class="loading-spinner" *ngIf="cameraStates[i] === 'loading'"></div>
+                <i class="fa fa-video-camera status-icon" *ngIf="cameraStates[i] === 'unavailable'"></i>
+                <i class="fa fa-exclamation-circle status-icon error" *ngIf="cameraStates[i] === 'error'"></i>
+                <p>{{ cameraMessages[i] }}</p>
+                <button type="button" class="camera-retry-btn" *ngIf="cameraStates[i] === 'error'"
+                  (click)="retryCamera(i)">
+                  <i class="fa fa-refresh"></i> Try Again
+                </button>
+              </div>
+              <img *ngIf="vendorId === 3 && snapshotImages[i]" class="camera-snapshot"
+                [src]="snapshotImages[i]" [alt]="'Camera ' + (i + 1) + ' snapshot'" />
+              <video *ngIf="vendorId !== 3" id="video_camera_{{ i + 1 }}" width="300" height="240" playsinline muted></video>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Modal Popup -->
+  <div class="modal-backdrop" *ngIf="showErrorModal"></div>
+  <div class="error-modal" *ngIf="showErrorModal">
+    <div class="modal-content">
+      <p>{{ errorMessage }}</p>
+      <button (click)="closeErrorModal()">Close</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,191 @@
+// General Container Styles
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding-top: 50px; // Adjust for fixed header height
+  padding-left: 210px; // Adjust for sidebar width
+  box-sizing: border-box;
+
+  .main-container {
+    display: flex;
+    flex: 1;
+    overflow: auto;
+
+    .main {
+      flex: 1;
+      padding: 20px;
+
+      .heading {
+        margin-bottom: 20px;
+      }
+
+      // 🔹 Top-right button section
+      .top-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-bottom: 20px;
+
+        
+      }
+
+      .card-body {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+
+        .site-form {
+          .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+
+            .form-group {
+              flex: 1;
+              margin-right: 15px;
+
+              &:last-child {
+                margin-right: 0;
+              }
+
+              label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: bold;
+                color: #333;
+              }
+
+              input,
+              select {
+                width: 100%;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                box-sizing: border-box;
+              }
+            }
+          }
+
+          
+          }
+        }
+      }
+    }
+  }
+
+
+// Footer Styles
+.footer {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  padding-left: 30px; // Adjust for sidebar width
+
+  .build {
+    font-weight: bold;
+    color: black;
+  }
+
+  .int {
+    font-weight: bold;
+    color: green;
+  }
+}
+
+// Media Queries for Responsive Design
+@media (max-width: 1200px) {
+  .container {
+    padding-left: 200px;
+  }
+
+  .main-container {
+    .main {
+      padding: 15px;
+    }
+  }
+}
+
+@media (max-width: 992px) {
+  .container {
+    padding-left: 0;
+  }
+
+  .main-container {
+    flex-direction: column;
+    padding: 10px;
+
+    .main {
+      padding: 10px;
+    }
+  }
+
+  .footer {
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding-top: 50px;
+  }
+
+  .main-container {
+    .main {
+      padding: 10px;
+    }
+  }
+
+  .footer {
+    padding-left: 0;
+  }
+
+  .top-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+/* Button row alignment */
+.button-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* Update button */
+.submit-btn {
+  flex: 1;
+  background-color: #0d6efd;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.submit-btn:hover {
+  background-color: #0b5ed7;
+}
+
+/* Cancel button */
+.cancel-btn {
+  flex: 1;
+  background-color: transparent;
+  border: 1px solid #000;
+  padding: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cancel-btn:hover {
+  background-color: #f1f1f1;
+}

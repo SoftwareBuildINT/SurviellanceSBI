@@ -1,0 +1,88 @@
+<div class="container">
+  <div class="header">
+    <app-header [heading]="' Add User'"></app-header>
+  </div>
+
+  <div class="main-container">
+    <div class="side-nav">
+      <app-sidebar></app-sidebar>
+    </div>
+    <div class="main">
+      <div class="card-body">
+        <form class="user-form" (ngSubmit)="onSubmit(userForm)" #userForm="ngForm">
+          <div class="row">
+            <div class="form-group">
+              <label for="firstName">First Name</label>
+              <input type="text" id="firstName" name="firstName" [(ngModel)]="user.firstName" placeholder="First Name"
+                required>
+            </div>
+            <div class="form-group">
+              <label for="lastName">Last Name</label>
+              <input type="text" id="lastName" name="lastName" [(ngModel)]="user.lastName" placeholder="Last Name"
+                required>
+            </div>
+          </div>
+          <div class="row">
+            <div class="form-group">
+              <label for="email">Email ID</label>
+              <input type="email" id="email" name="email" [(ngModel)]="user.email" placeholder="Email ID" required>
+            </div>
+            <div class="form-group">
+              <label for="phoneNumber">Phone Number</label>
+              <input type="tel" id="phoneNumber" name="phoneNumber" [(ngModel)]="user.phoneNumber"
+                placeholder="Phone Number" required (keypress)="validatePhoneNumber($event)"
+                (input)="formatPhoneNumber($event)" maxlength="10">
+            </div>
+          </div>
+          <div class="row">
+            <div class="form-group" style="width:48%; display:inline-block;">
+              <label for="role">Role</label>
+              <select id="role" name="role" [(ngModel)]="user.role" required>
+                <option value="" disabled selected>Select Role</option>
+                <option *ngFor="let r of roles" [value]="r.name">{{ r.name }}</option>
+              </select>
+            </div>
+
+            <div class="form-group lho-multiselect-wrapper" style="width:48%; display:inline-block; margin-left:4%;">
+              <label>LHO</label>
+              <div class="lho-dropdown-trigger" (click)="toggleLhoDropdown()">
+                <span [class.placeholder]="selectedLhoIds.length === 0">{{ lhoDisplayLabel }}</span>
+                <span class="arrow" [class.open]="lhoDropdownOpen">&#9660;</span>
+              </div>
+
+              <div class="lho-dropdown-panel" *ngIf="lhoDropdownOpen">
+                <!-- Select All -->
+                <label class="lho-option select-all-option">
+                  <input
+                    type="checkbox"
+                    [checked]="isAllSelected"
+                    [indeterminate]="isIndeterminate"
+                    (change)="toggleAllLhos()"
+                  >
+                  <span>Select All</span>
+                </label>
+                <div class="lho-divider"></div>
+                <!-- Individual LHOs -->
+                <label class="lho-option" *ngFor="let l of lhoList">
+                  <input
+                    type="checkbox"
+                    [checked]="isLhoSelected(l.lho_id)"
+                    (change)="toggleLho(l.lho_id)"
+                  >
+                  <span>{{ l.lho_name }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn">Submit</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    Powered by <span class="build">Build</span><span class="int">INT</span>
+  </footer>
+</div>

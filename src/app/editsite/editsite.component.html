@@ -1,0 +1,136 @@
+<div class="container">
+  <div class="header">
+    <app-header [heading]="'Edit Site Details'"></app-header>
+  </div>
+
+  <div class="main-container">
+    <div class="side-nav">
+      <app-sidebar></app-sidebar>
+    </div>
+
+    <div class="main">
+      <div class="card-body">
+
+        <form class="site-form" (ngSubmit)="updateSite()" #editForm="ngForm">
+
+          <!-- LHO -->
+          <div class="row">
+            <div class="form-group">
+              <label>LHO Name</label>
+              <select [(ngModel)]="site.lho_id" name="lho_id" required>
+                <option value="" disabled>Select LHO</option>
+                <option *ngFor="let l of lhoList" [value]="l.lho_id">
+                  {{ l.lho_name }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- ATM Latest -->
+          <div class="row">
+            <div class="form-group">
+              <label>ATM ID</label>
+              <input type="text" [(ngModel)]="site.atm_latest" name="atm_latest" required />
+            </div>
+          </div>
+
+          <!-- ATM 1–5 -->
+          <div class="row">
+            <div class="form-group">
+              <label>ATM 1</label>
+              <input type="text" [(ngModel)]="site.atm_1" name="atm_1" />
+            </div>
+
+            <div class="form-group">
+              <label>ATM 2</label>
+              <input type="text" [(ngModel)]="site.atm_2" name="atm_2" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="form-group">
+              <label>ATM 3</label>
+              <input type="text" [(ngModel)]="site.atm_3" name="atm_3" />
+            </div>
+
+            <div class="form-group">
+              <label>ATM 4</label>
+              <input type="text" [(ngModel)]="site.atm_4" name="atm_4" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="form-group">
+              <label>ATM 5</label>
+              <input type="text" [(ngModel)]="site.atm_5" name="atm_5" />
+            </div>
+          </div>
+
+          <!-- Status & Vendor -->
+          <div class="row">
+            <div class="form-group">
+              <label>Status</label>
+              <select [(ngModel)]="site.is_active" name="is_active" required>
+                <option value="1">Active</option>
+                <option value="0">Inactive</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Vendor</label>
+              <select [(ngModel)]="site.vendor" name="vendor" required>
+                <option *ngFor="let v of vendorList" [value]="v.vendor_id">
+                  {{ v.vendor_name }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Address -->
+          <div class="row">
+            <div class="form-group full-width">
+              <label>Site Address</label>
+              <input type="text" [(ngModel)]="site.site_address" name="site_address" required />
+            </div>
+          </div>
+
+          <!-- City / State / Pincode -->
+          <div class="row">
+            <div class="form-group">
+              <label>City</label>
+              <input type="text" [(ngModel)]="site.city" name="city" required />
+            </div>
+
+            <div class="form-group">
+              <label>State</label>
+              <input type="text" [(ngModel)]="site.state" name="state" required />
+            </div>
+
+            <div class="form-group">
+              <label>Pincode</label>
+              <input
+                type="text"
+                [(ngModel)]="site.pincode"
+                name="pincode"
+                maxlength="6"
+                required
+                (keypress)="validatePincode($event)"
+              />
+            </div>
+          </div>
+
+          <!-- Buttons -->
+          <div class="row">
+            <button type="submit" class="submit-btn">Update</button>
+            <button type="button" class="cancel-btn" (click)="cancel()">Cancel</button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    Powered by <span class="build">Build</span><span class="int">INT</span>
+  </footer>
+</div>

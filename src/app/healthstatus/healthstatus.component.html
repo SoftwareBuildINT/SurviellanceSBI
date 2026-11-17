@@ -1,0 +1,117 @@
+<div class="container">
+  <div class="header">
+    <app-header [heading]="'Health Status'"></app-header>
+  </div>
+
+  <div class="main-container">
+    <!-- SIDE NAV -->
+    <div class="side-nav">
+      <app-sidebar></app-sidebar>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main">
+
+      <!-- TOP CONTROLS (Search + Export Button) -->
+      <div class="controls">
+
+        <input type="text" class="search-input" placeholder="Search..."
+          [(ngModel)]="searchText" (ngModelChange)="onSearchChange()" />
+
+        <div class="buttons">
+          <button class="btn btn-success" (click)="exportToExcel()">Export to Excel</button>
+          <button class="btn btn-primary" (click)="navigateToLiveHealth()" *ngIf="isLiveHealthUser">Health</button>
+        </div>
+
+      </div>
+
+      <!-- TABLE WRAPPER -->
+      <div class="table-container">
+
+        <!-- TABLE LOADER -->
+        <div class="table-loader" *ngIf="loading">
+          <div class="spinner"></div>
+          <p>Loading health status...</p>
+        </div>
+
+        <!-- TABLE -->
+        <table class="table" *ngIf="!loading">
+          <thead>
+            <tr>
+              <th>Sr No</th>
+              <th>LHO</th>
+              <th>ATM Latest</th>
+              <th>ATM 1</th>
+              <th>ATM 2</th>
+              <th>ATM 3</th>
+              <th>ATM 4</th>
+              <th>ATM 5</th>
+              <th>Address</th>
+              <th>State</th>
+              <th>City</th>
+              <th>Pincode</th>
+              <th>Vendor</th>
+              <th>Vendor Source</th>
+              <th>Status</th>
+              <th>Last Communication</th>
+              <th>Ageing</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let item of paginatedData; let i = index">
+              <td>{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+              <td>{{ item.LHO }}</td>
+              <td>{{ item.atm_latest || '-' }}</td>
+              <td>{{ item.atm_1 || '-' }}</td>
+              <td>{{ item.atm_2 || '-' }}</td>
+              <td>{{ item.atm_3 || '-' }}</td>
+              <td>{{ item.atm_4 || '-' }}</td>
+              <td>{{ item.atm_5 || '-' }}</td>
+              <td class="address-cell">{{ item.address }}</td>
+              <td>{{ item.state }}</td>
+              <td>{{ item.city }}</td>
+              <td>{{ item.pincode }}</td>
+              <td>{{ item.vendor }}</td>
+              <td>{{ item.vendorSource }}</td>
+              <td>{{ item.status }}</td>
+              <td>{{ item.lastCommunication }}</td>
+              <td>{{ item.ageing }}</td>
+            </tr>
+
+            <tr *ngIf="paginatedData.length === 0">
+              <td colspan="17" class="no-records">No records found</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- PAGINATION -->
+        <div class="pagination-footer d-flex justify-content-center align-items-center gap-3 mt-3"
+          *ngIf="!loading && totalPages > 1">
+
+          <button class="btn" (click)="goToFirst()" [disabled]="currentPage === 1">
+            ⏮ First
+          </button>
+
+          <button class="btn" (click)="goToPrev()" [disabled]="currentPage === 1">
+            ◀ Prev
+          </button>
+
+          <span class="page-info">
+            Page {{ currentPage }} of {{ totalPages }} ({{ totalRecords }} records)
+          </span>
+
+          <button class="btn" (click)="goToNext()" [disabled]="currentPage === totalPages">
+            Next ▶
+          </button>
+
+          <button class="btn" (click)="goToLast()" [disabled]="currentPage === totalPages">
+            Last ⏭
+          </button>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

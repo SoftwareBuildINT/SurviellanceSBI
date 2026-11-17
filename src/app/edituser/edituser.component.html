@@ -1,0 +1,127 @@
+<div class="container" *ngIf="!loading">
+  <div class="header">
+    <app-header [heading]="'Edit User'"></app-header>
+  </div>
+
+  <div class="main-container">
+    <div class="side-nav">
+      <app-sidebar></app-sidebar>
+    </div>
+
+    <div class="main">
+      <div class="card-body">
+        <form class="user-form" (ngSubmit)="onSubmit(userForm)" #userForm="ngForm">
+
+          <div class="row">
+            <div class="form-group">
+              <label for="firstName">First Name</label>
+              <input type="text" id="firstName" name="first_name" [(ngModel)]="user.first_name" placeholder="First Name"
+                required>
+            </div>
+
+            <div class="form-group">
+              <label for="lastName">Last Name</label>
+              <input type="text" id="lastName" name="last_name" [(ngModel)]="user.last_name" placeholder="Last Name"
+                required>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="form-group">
+              <label for="email">Email ID</label>
+              <input type="email" id="email" name="email_id" [(ngModel)]="user.email_id"
+                placeholder="Email ID" required email>
+            </div>
+
+            <div class="form-group">
+              <label for="phoneNumber">Phone Number</label>
+              <input type="tel" id="phoneNumber" name="contact" [(ngModel)]="user.contact" placeholder="Phone Number"
+                required maxlength="10">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="form-group">
+              <label for="role">Role</label>
+              <select id="role" name="role_id" [(ngModel)]="user.role_id"
+                (ngModelChange)="onRoleChange()" required>
+                <option *ngFor="let role of roles" [ngValue]="role.role_id">
+                  {{ role.role_name }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="status">Status</label>
+              <select id="status" name="is_active" [(ngModel)]="user.is_active" required>
+                <option [ngValue]="1">Active</option>
+                <option [ngValue]="0">Inactive</option>
+              </select>
+            </div>
+
+            <div class="form-group lho-multiselect-wrapper" style="width:48%; display:inline-block; margin-left:4%;">
+              <label>LHO</label>
+              <div class="lho-dropdown-trigger" (click)="toggleLhoDropdown()">
+                <span [class.placeholder]="selectedLhoIds.length === 0">
+                  {{ lhoDisplayLabel }}
+                </span>
+                <span class="arrow" [class.open]="lhoDropdownOpen">&#9660;</span>
+              </div>
+
+              <div class="lho-dropdown-panel" *ngIf="lhoDropdownOpen">
+                <!-- Select All -->
+                <label class="lho-option select-all-option">
+                  <input
+                    type="checkbox"
+                    [checked]="isAllSelected"
+                    [indeterminate]="isIndeterminate"
+                    (change)="toggleAllLhos()"
+                  >
+                  <span>Select All</span>
+                </label>
+                <div class="lho-divider"></div>
+                <!-- Individual LHOs -->
+                <label class="lho-option" *ngFor="let l of lhoList">
+                  <input
+                    type="checkbox"
+                    [checked]="isLhoSelected(l.lho_id)"
+                    (change)="toggleLho(l.lho_id)"
+                  >
+                  <span>{{ l.lho_name }}</span>
+                </label>
+              </div>
+            </div>
+
+          </div>
+        <div class="form-actions">
+  <button type="submit" class="submit-btn" [disabled]="userForm.invalid">
+    Save Changes
+  </button>
+
+  <button type="button" class="cancel-btn" (click)="onCancel()">
+    Cancel
+  </button>
+</div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Popup -->
+  <div class="success-popup" *ngIf="showPopup">
+    <div class="popup-content">
+      <div class="checkmark">&#10004;</div>
+      <p>User Edited Successfully!</p>
+      <small>Redirecting...</small>
+    </div>
+  </div>
+
+  <footer class="footer">
+    Powered by <span class="build">Build</span><span class="int">INT</span>
+  </footer>
+</div>
+
+<!-- Loading Spinner -->
+<div *ngIf="loading" class="loading-spinner">
+  Loading user data...
+</div>

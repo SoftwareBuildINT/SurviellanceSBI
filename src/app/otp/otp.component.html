@@ -1,0 +1,71 @@
+<div class="otp-container">
+  <!-- Left Side -->
+  <div class="otp-left">
+    <img src="assets/images/hitachi logo.png" alt="Hitachi Logo" class="welcome-image" />
+  </div>
+
+  <!-- Right Side -->
+  <div class="otp-right">
+    <div class="logo-container">
+      <!-- SBI logo -->
+      <img src="assets/images/sbi.png" alt="SBI Logo" class="sbi-logo" />
+    </div>
+
+    <!-- OTP Form -->
+    <form (ngSubmit)="submitOtp()" [formGroup]="otpForm" class="otp-form">
+      <div class="form-group">
+        <label class="form-label">Enter OTP sent on your registered Email:</label>
+        <div class="otp-inputs" formArrayName="otp">
+          <input *ngFor="let ctrl of otpControls.controls; let i = index" [formControlName]="i" type="text"
+            maxlength="1" (input)="onInput($event, i)" (keydown)="onKeydown($event, i)" class="otp-box" />
+        </div>
+
+        <!-- Error Message -->
+        <div *ngIf="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </div>
+      </div>
+      <!-- Timer -->
+      <div *ngIf="timer > 0" class="otp-timer">
+        OTP expires in: {{ formattedTimer }}
+      </div>
+      <div *ngIf="timer <= 0" class="otp-timer-expired">
+        OTP has expired. Please request a new one.
+      </div>
+      <!-- Submit -->
+      <button type="submit" class="btn btn-primary" [disabled]="!otpForm.valid || timer <= 0">
+        Verify OTP
+      </button>
+    </form>
+
+
+
+    <!-- Popup for Invalid OTP -->
+    <div *ngIf="showPopup" class="popup-overlay">
+      <div class="popup">
+        <p>
+          Invalid OTP! <br />
+          <b>Please try again.</b>
+        </p>
+        <button (click)="closePopup()">Close</button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      Powered by
+      <span class="build">Build</span>
+      <span class="int">INT</span>
+    </footer>
+  </div>
+</div>
+<div *ngIf="showPopup" class="popup-overlay">
+  <div class="popup">
+    <p>
+      <b>Contact Administrator</b><br />
+      Your account is locked due to maximum OTP attempts.
+    </p>
+    <button (click)="closePopup()" class="btn btn-danger">Close</button>
+  </div>
+</div>
+

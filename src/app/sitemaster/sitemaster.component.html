@@ -1,0 +1,190 @@
+<div class="container">
+  <div class="header">
+    <app-header [heading]="'Site Master'"></app-header>
+  </div>
+
+  <div class="main-container">
+    <div class="side-nav">
+      <app-sidebar></app-sidebar>
+    </div>
+
+    <div class="main">
+      <!-- Top controls -->
+      <div class="controls">
+        <input type="text" class="form-control search-input" placeholder="Search..." [(ngModel)]="searchText"
+          (ngModelChange)="onSearchChange()" />
+
+        <a href="addsite" class="btn btn-dark oval-button" *ngIf="userRole === 1">
+          + Add Site
+        </a>
+
+        <div class="buttons">
+          <button class="btn btn-primary" (click)="triggerBulkUpload()" [disabled]="userRole !== 1"
+            [title]="userRole === 1 ? 'Upload Site Master records' : 'Admin access required'">
+            Bulk Upload
+          </button>
+
+          <button class="btn btn-danger" (click)="triggerBulkDelete()" [disabled]="userRole !== 1"
+            [title]="userRole === 1 ? 'Delete Site Master records using Excel' : 'Admin access required'">
+            Bulk Delete
+          </button>
+
+          <button class="btn btn-outline-danger" *ngIf="userRole === 1" (click)="downloadBulkDeleteTemplate()">
+            Delete Excel Template
+          </button>
+
+          <button class="btn btn-success" *ngIf="userRole === 1" (click)="downloadSampleExcel()">
+            Download Sample Excel
+          </button>
+
+          <button class="btn btn-success" (click)="exportToExcel()">
+            Export to Excel
+          </button>
+
+          <input type="file" #bulkFile hidden accept=".xlsx,.xls" (change)="onBulkFileSelected($event)" />
+          <input type="file" #bulkDeleteFile hidden accept=".xlsx,.xls" (change)="onBulkDeleteFileSelected($event)" />
+        </div>
+
+
+      </div>
+
+      <!-- Table -->
+      <div class="table-container">
+        <!-- TABLE LOADER ONLY INSIDE TABLE BOX -->
+        <div class="table-loader" *ngIf="isLoadingTable">
+          <div class="spinner"></div>
+          <p>Loading site details...</p>
+        </div>
+        <table class="table table-bordered table-hover">
+          <thead>
+            <tr>
+              <th>ATM ID</th>
+              <th>ATM 1</th>
+              <th>ATM 2</th>
+              <th>ATM 3</th>
+              <th>ATM 4</th>
+              <th>ATM 5</th>
+              <th>LHO</th>
+              <th>Vendor</th>
+              <th>Address</th>
+              <th>City</th>
+              <th>State</th>
+              <th>Pincode</th>
+              <th>Status</th>
+              <th>Action</th> <!-- ✅ NEW -->
+            </tr>
+          </thead>
+
+          <tbody>
+            <!-- <tr *ngFor="let site of filteredSites(); let i = index"> -->
+            <tr *ngFor="let site of paginatedSites(); let i = index">
+
+              <td [title]="site.atm_latest">
+                {{ site.atm_latest }}
+              </td>
+
+              <td [title]="site.atm_1 || '-'">
+                {{ site.atm_1 || '-' }}
+              </td>
+
+              <td [title]="site.atm_2 || '-'">
+                {{ site.atm_2 || '-' }}
+              </td>
+
+              <td [title]="site.atm_3 || '-'">
+                {{ site.atm_3 || '-' }}
+              </td>
+
+              <td [title]="site.atm_4 || '-'">
+                {{ site.atm_4 || '-' }}
+              </td>
+
+              <td [title]="site.atm_5 || '-'">
+                {{ site.atm_5 || '-' }}
+              </td>
+
+              <td [title]="site.lho_name">
+                {{ site.lho_name }}
+              </td>
+
+              <td [title]="site.vendor_name">
+                {{ site.vendor_name }}
+              </td>
+
+              <!-- Address -->
+              <td [title]="site.site_address">
+                {{ site.site_address | slice:0:30 }}
+                {{ site.site_address?.length > 30 ? '...' : '' }}
+              </td>
+
+              <td [title]="site.city">
+                {{ site.city }}
+              </td>
+
+              <td [title]="site.state">
+                {{ site.state }}
+              </td>
+
+              <td [title]="site.pincode">
+                {{ site.pincode }}
+              </td>
+
+              <td>
+                <span [title]="site.is_active ? 'Active' : 'Inactive'" [ngClass]="{
+          'active-status': site.is_active,
+          'inactive-status': !site.is_active
+        }">
+                  {{ site.is_active ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="action-cell">
+                <button class="icon-btn edit-btn" (click)="editSite(site)" title="Edit Site">
+                  Edit
+                </button>
+
+                <button class="icon-btn delete-btn" (click)="confirmDelete(site)" title="Delete Site">
+                  Delete
+                </button>
+              </td>
+
+
+            </tr>
+
+            <tr *ngIf="filteredSites().length === 0">
+              <td colspan="13" class="no-records">No records found</td>
+            </tr>
+          </tbody>
+
+        </table>
+        <!-- Pagination Controls -->
+        <div class="pagination-container" *ngIf="totalPages > 1">
+          <button class="btn btn-sm btn-secondary" [disabled]="currentPage === 1" (click)="goToPage(1)">
+            ⏮ First
+          </button>
+
+          <button class="btn btn-sm btn-secondary" [disabled]="currentPage === 1" (click)="prevPage()">
+            ◀ Prev
+          </button>
+
+          <span class="page-info">
+            Page {{ currentPage }} of {{ totalPages }}
+          </span>
+
+          <button class="btn btn-sm btn-secondary" [disabled]="currentPage === totalPages" (click)="nextPage()">
+            Next ▶
+          </button>
+
+          <button class="btn btn-sm btn-secondary" [disabled]="currentPage === totalPages"
+            (click)="goToPage(totalPages)">
+            Last ⏭
+          </button>
+        </div>
+
+        <!-- Loader Template -->
+        <ng-template #loading>
+          <div class="spinner"></div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</div>

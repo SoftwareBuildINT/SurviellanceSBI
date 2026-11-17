@@ -1,0 +1,791 @@
+{
+  "info": {
+    "name": "SBI Surveillance Dashboard API",
+    "description": "Complete API collection for SBI Surveillance Dashboard.\n\n**Auth Flow:**\n1. POST /login (urlencoded) → save `tempToken`\n2. POST /verify-otp (Bearer tempToken) → save `token`\n3. All subsequent requests use Bearer `{{token}}`\n\n**Variables to set before testing:**\n- `baseUrl` — already set to production URL\n- `token` — auto-filled after verify-otp\n- `tempToken` — auto-filled after login\n- `resetToken` — auto-filled after forgot/verify-otp\n- `userId` — set to your users_id",
+    "_postman_id": "sbi-surveillance-v2",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",    "value": "https://sbi-dashboard.ifiber.in:7668/api", "type": "string" },
+    { "key": "token",      "value": "",  "type": "string" },
+    { "key": "tempToken",  "value": "",  "type": "string" },
+    { "key": "resetToken", "value": "",  "type": "string" },
+    { "key": "userId",     "value": "",  "type": "string" }
+  ],
+  "item": [
+
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "1. Login",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const r = pm.response.json();",
+                "if (r.tempToken) pm.collectionVariables.set('tempToken', r.tempToken);",
+                "if (r.userId) pm.collectionVariables.set('userId', String(r.userId));",
+                "pm.test('Login success - got tempToken', () => { pm.response.to.have.status(200); pm.expect(r.tempToken).to.be.a('string'); });"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "EmailId",  "value": "your_email@example.com", "type": "text" },
+                { "key": "password", "value": "YourPassword",            "type": "text" }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/login", "host": ["{{baseUrl}}"], "path": ["login"] },
+            "description": "Step 1: Returns `tempToken` (10-min JWT, OTP not yet verified). Body: x-www-form-urlencoded."
+          }
+        },
+        {
+          "name": "2. Verify OTP",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const r = pm.response.json();",
+                "if (r.token) pm.collectionVariables.set('token', r.token);",
+                "pm.test('OTP verified - got final token', () => { pm.response.to.have.status(200); pm.expect(r.token).to.be.a('string'); });"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tempToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"otp\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/verify-otp", "host": ["{{baseUrl}}"], "path": ["verify-otp"] },
+            "description": "Step 2: Send OTP received on registered email. Requires tempToken as Bearer. Saves final token on success."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/logout", "host": ["{{baseUrl}}"], "path": ["logout"] },
+            "description": "Blacklists the current JWT. User must login again."
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"CurrentPassword@123\",\n  \"newPassword\": \"NewStrongPass@12345\",\n  \"confirmPassword\": \"NewStrongPass@12345\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/change-password", "host": ["{{baseUrl}}"], "path": ["change-password"] },
+            "description": "Password policy: min 15 chars, must include uppercase, lowercase, number, and special character."
+          }
+        },
+        {
+          "name": "Get Password Expiry",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/password-expiry/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["password-expiry", "{{userId}}"]
+            },
+            "description": "Returns days remaining before password expires (30-day policy). Set {{userId}} variable."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Forgot Password",
+      "item": [
+        {
+          "name": "1. Check Email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/forgot/check-email", "host": ["{{baseUrl}}"], "path": ["forgot", "check-email"] },
+            "description": "Check if email is registered before sending OTP. Returns {exists: true/false}."
+          }
+        },
+        {
+          "name": "2. Send OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/forgot/send-otp", "host": ["{{baseUrl}}"], "path": ["forgot", "send-otp"] },
+            "description": "Sends OTP to the registered email. OTP valid for 15 min. Rate limited."
+          }
+        },
+        {
+          "name": "3. Verify OTP (Forgot)",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const r = pm.response.json();",
+                "if (r.resetToken) pm.collectionVariables.set('resetToken', r.resetToken);",
+                "pm.test('Reset token received', () => pm.expect(r.resetToken).to.be.a('string'));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userEmail\": \"user@example.com\",\n  \"otp\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/forgot/verify-otp", "host": ["{{baseUrl}}"], "path": ["forgot", "verify-otp"] },
+            "description": "Verify the forgot-password OTP. Returns resetToken on success."
+          }
+        },
+        {
+          "name": "4. Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPassword\": \"NewStrongPass@12345\",\n  \"resetToken\": \"{{resetToken}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/forgot/reset-password", "host": ["{{baseUrl}}"], "path": ["forgot", "reset-password"] },
+            "description": "Reset password using resetToken from step 3. Min 15 chars. Cannot reuse last 5 passwords."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Dashboard Snapshot",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard-snapshot?lho_id=25",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard-snapshot"],
+              "query": [{ "key": "lho_id", "value": "25", "description": "Optional. Omit to get all LHOs." }]
+            },
+            "description": "Returns totalLocations, totalOnline, totalOffline, totalPercentage, lhoDetails[]."
+          }
+        },
+        {
+          "name": "Dashboard Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard-summary", "host": ["{{baseUrl}}"], "path": ["dashboard-summary"] },
+            "description": "High-level summary of online/offline counts."
+          }
+        },
+        {
+          "name": "Dashboard LHO Details",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard-lho-details", "host": ["{{baseUrl}}"], "path": ["dashboard-lho-details"] },
+            "description": "Per-LHO online/offline breakdown from the latest cron snapshot."
+          }
+        },
+        {
+          "name": "Dashboard Data (Legacy)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboardData", "host": ["{{baseUrl}}"], "path": ["dashboardData"] },
+            "description": "Legacy dashboard data endpoint. Returns totalLocations and lhoDetails[]."
+          }
+        },
+        {
+          "name": "LHO List",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/lho-list?lho_id=25",
+              "host": ["{{baseUrl}}"],
+              "path": ["lho-list"],
+              "query": [{ "key": "lho_id", "value": "25", "description": "Optional filter." }]
+            },
+            "description": "Returns LHO list used by the dashboard dropdown."
+          }
+        },
+        {
+          "name": "LHO List (Alt)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/lho-list1", "host": ["{{baseUrl}}"], "path": ["lho-list1"] },
+            "description": "Returns [{lho_id, lho_name}]."
+          }
+        },
+        {
+          "name": "Get LHO List (API)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/getLHOList", "host": ["{{baseUrl}}"], "path": ["api", "getLHOList"] },
+            "description": "Returns [{lho_id, lho_name}]. Registered at /api/getLHOList on the server."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Live Health Check",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/live-health-check", "host": ["{{baseUrl}}"], "path": ["live-health-check"] },
+            "description": "Pings all vendor APIs (BUILDINT, ANIKET, SECURENS, GLOBAL, CTS, ITL, DFS) and returns their live connectivity status."
+          }
+        },
+        {
+          "name": "Get ATM Details / Health Report",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/get-atm-details?lho_id=25",
+              "host": ["{{baseUrl}}"],
+              "path": ["get-atm-details"],
+              "query": [{ "key": "lho_id", "value": "25", "description": "Required. LHO ID for the health report." }]
+            },
+            "description": "Returns per-ATM health report with ONLINE/OFFLINE status, ageing, and last communication time."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Site Master",
+      "item": [
+        {
+          "name": "Get All Sites",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/sitemaster", "host": ["{{baseUrl}}"], "path": ["api", "sitemaster"] },
+            "description": "Returns all active ATM sites with LHO name and vendor name. Response key: 'sites'."
+          }
+        },
+        {
+          "name": "Get Site by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/site/1", "host": ["{{baseUrl}}"], "path": ["api", "site", "1"] },
+            "description": "Returns a single site record by primary key ID."
+          }
+        },
+        {
+          "name": "Add Site",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"atm_latest\": \"NEWSITE001\",\n  \"atm_1\": null,\n  \"atm_2\": null,\n  \"atm_3\": null,\n  \"atm_4\": null,\n  \"atm_5\": null,\n  \"lho_id\": 25,\n  \"vendor\": 4,\n  \"site_address\": \"123 Test Street\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"pincode\": \"400001\",\n  \"is_active\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/add-site", "host": ["{{baseUrl}}"], "path": ["add-site"] },
+            "description": "Admin only. Adds a new ATM site. Returns {message, id}."
+          }
+        },
+        {
+          "name": "Update Site",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"atm_latest\": \"ATMID001\",\n  \"atm_1\": null,\n  \"atm_2\": null,\n  \"atm_3\": null,\n  \"atm_4\": null,\n  \"atm_5\": null,\n  \"lho_id\": 25,\n  \"vendor\": 4,\n  \"site_address\": \"Updated Address\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"pincode\": \"400001\",\n  \"is_active\": 1,\n  \"updated_by\": {{userId}}\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/update-site", "host": ["{{baseUrl}}"], "path": ["api", "update-site"] },
+            "description": "Required fields: id, atm_latest, lho_id, vendor, site_address, city, state, pincode."
+          }
+        },
+        {
+          "name": "Delete Site",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 999,\n  \"deleted_by\": {{userId}}\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/delete-site", "host": ["{{baseUrl}}"], "path": ["api", "delete-site"] },
+            "description": "Soft-deletes a site (sets is_deleted=1). Requires id and deleted_by (current user's ID)."
+          }
+        },
+        {
+          "name": "Bulk Upload Sites (Excel)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": "", "description": "Excel file (.xlsx)" }]
+            },
+            "url": { "raw": "{{baseUrl}}/api/bulk-upload-sites", "host": ["{{baseUrl}}"], "path": ["api", "bulk-upload-sites"] },
+            "description": "Upload Excel file to bulk-insert/update ATM sites."
+          }
+        },
+        {
+          "name": "Get ATM List",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/atm-list", "host": ["{{baseUrl}}"], "path": ["atm-list"] },
+            "description": "Returns all ATM IDs (atm_latest, atm_1..atm_5) from atm_list_new3."
+          }
+        },
+        {
+          "name": "Get Vendors",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/vendors", "host": ["{{baseUrl}}"], "path": ["vendors"] },
+            "description": "Returns [{vendor_id, vendor_name}]. IDs: 1=Aniket, 3=Securens, 4=BUILDINT, 6=Global, 7=CTS."
+          }
+        },
+        {
+          "name": "Get ATM Vendor",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"atmId\": \"ATMID001\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/atm-vendor", "host": ["{{baseUrl}}"], "path": ["atm-vendor"] },
+            "description": "Returns vendor ID for a given ATM ID. Response: {vendor: 1}."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "LHO Management",
+      "item": [
+        {
+          "name": "Add LHO",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lho_name\": \"SBI-TOM-NEWLHO\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/add-lho", "host": ["{{baseUrl}}"], "path": ["add-lho"] },
+            "description": "Admin only. Adds a new LHO. Returns {message, lho_id}."
+          }
+        },
+        {
+          "name": "Update LHO",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lho_name\": \"SBI-TOM-UPDATED\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/update-lho/:lho_id", "host": ["{{baseUrl}}"], "path": ["update-lho", ":lho_id"] },
+            "description": "Admin only. Updates LHO name. Replace :lho_id in the URL with the actual ID."
+          }
+        },
+        {
+          "name": "Delete LHO",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/delete-lho/:lho_id", "host": ["{{baseUrl}}"], "path": ["delete-lho", ":lho_id"] },
+            "description": "Admin only. Soft-deletes LHO. Replace :lho_id in the URL with the actual ID."
+          }
+        },
+        {
+          "name": "ITL Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/itl-dashboard", "host": ["{{baseUrl}}"], "path": ["itl-dashboard"] },
+            "description": "Returns ATM status data from the ITL vendor."
+          }
+        },
+        {
+          "name": "BuildINT Sites",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/buildintSites", "host": ["{{baseUrl}}"], "path": ["buildintSites"] },
+            "description": "Fetches site list from BuildINT external API. May return 500 if external API is unreachable."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "User Management",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"First\",\n  \"last_name\": \"Last\",\n  \"email_id\": \"newuser@example.com\",\n  \"contact\": \"9999999999\",\n  \"role_id\": 3,\n  \"lho_id\": 25\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/register", "host": ["{{baseUrl}}"], "path": ["register"] },
+            "description": "Admin only. Password is auto-generated and emailed. role_id: 1=Admin, 2=SubAdmin, 3=User."
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] },
+            "description": "Returns all users. Admin sees all, SubAdmin sees limited."
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            },
+            "description": "Returns a single user record by users_id."
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "userid",        "value": "{{userId}}", "description": "Required: ID of the user making the request." }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"First\",\n  \"last_name\": \"Last\",\n  \"email_id\": \"user@example.com\",\n  \"contact\": \"9999999999\",\n  \"role_id\": 1,\n  \"is_active\": 1,\n  \"lho_id\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            },
+            "description": "Update user profile. Requires 'userid' custom header (current user's ID). All fields are required."
+          }
+        },
+        {
+          "name": "Unlock User",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/users/unlock/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "unlock", ":id"]
+            },
+            "description": "Admin only. Resets login_attempts to 0, unlocking a locked account. Replace :id with users_id."
+          }
+        },
+        {
+          "name": "Get Roles (with IDs)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/roles", "host": ["{{baseUrl}}"], "path": ["roles"] },
+            "description": "Returns [{role_id, role_name}]. IDs: 1=Admin, 2=SubAdmin, 3=User."
+          }
+        },
+        {
+          "name": "Get Role Names",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/Role", "host": ["{{baseUrl}}"], "path": ["Role"] },
+            "description": "Returns [{role_name}] — names only, no IDs."
+          }
+        },
+        {
+          "name": "Bulk Upload Users (Excel)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": "", "description": "Excel file (.xlsx)" }]
+            },
+            "url": { "raw": "{{baseUrl}}/bulk-upload-users", "host": ["{{baseUrl}}"], "path": ["bulk-upload-users"] },
+            "description": "Admin only. Bulk-register users from an Excel file."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Escalation / Levels",
+      "item": [
+        {
+          "name": "Get All Levels",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/levels", "host": ["{{baseUrl}}"], "path": ["levels"] },
+            "description": "Returns escalation contacts: [{id, level, name, email, contact}]."
+          }
+        },
+        {
+          "name": "Add Level",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"level\": \"Level 3\",\n  \"name\": \"Regional Manager\",\n  \"email\": \"manager@example.com\",\n  \"contact\": \"9876543210\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/add-levels", "host": ["{{baseUrl}}"], "path": ["add-levels"] },
+            "description": "Adds a new escalation level. Fields: level (string label), name, email, contact."
+          }
+        },
+        {
+          "name": "Update Level",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"level\": \"Level 3\",\n  \"name\": \"Updated Manager\",\n  \"email\": \"updated@example.com\",\n  \"contact\": \"9876543210\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/levels/:id", "host": ["{{baseUrl}}"], "path": ["levels", ":id"] },
+            "description": "Update escalation level by id (path param)."
+          }
+        },
+        {
+          "name": "Delete Level",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/levels/:id", "host": ["{{baseUrl}}"], "path": ["levels", ":id"] },
+            "description": "Delete escalation level by id."
+          }
+        },
+        {
+          "name": "Upload Escalation Excel",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": "", "description": "Excel file (.xlsx)" }]
+            },
+            "url": { "raw": "{{baseUrl}}/levels/upload-excel", "host": ["{{baseUrl}}"], "path": ["levels", "upload-excel"] },
+            "description": "Bulk-import escalation contacts from Excel."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Live View / Streams",
+      "item": [
+        {
+          "name": "Live View Links",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/live-view-links?atmId=ATMID001",
+              "host": ["{{baseUrl}}"],
+              "path": ["live-view-links"],
+              "query": [{ "key": "atmId", "value": "ATMID001", "description": "ATM ID (atm_latest value)" }]
+            },
+            "description": "POST with atmId as QUERY PARAM (not body). Returns live camera stream URLs. Result is cached for up to 24 hours."
+          }
+        },
+        {
+          "name": "Init Live View Cache",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/init-live-view-cache", "host": ["{{baseUrl}}"], "path": ["init-live-view-cache"] },
+            "description": "Initializes the live_view_cache DB table if it does not exist."
+          }
+        },
+        {
+          "name": "Stream Status",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/stream-status/:atmId/:cameraId",
+              "host": ["{{baseUrl}}"],
+              "path": ["stream-status", ":atmId", ":cameraId"]
+            },
+            "description": "Returns {ready, exists, processing, message}. Replace :atmId and :cameraId in the URL."
+          }
+        },
+        {
+          "name": "Stop FFmpeg",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/stop-ffmpeg?atmId=ATMID001",
+              "host": ["{{baseUrl}}"],
+              "path": ["stop-ffmpeg"],
+              "query": [{ "key": "atmId", "value": "ATMID001" }]
+            },
+            "description": "Kills the active FFmpeg process for a given ATM stream."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Misc / Utility",
+      "item": [
+        {
+          "name": "Check File Exists",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/check-file-exists?filename=ATMID001_1.m3u8",
+              "host": ["{{baseUrl}}"],
+              "path": ["check-file-exists"],
+              "query": [{ "key": "filename", "value": "ATMID001_1.m3u8" }]
+            },
+            "description": "Checks if an HLS stream file (.m3u8) exists on disk."
+          }
+        },
+        {
+          "name": "Update ATM Data (Excel)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": "", "description": "Excel file (.xlsx)" }]
+            },
+            "url": { "raw": "{{baseUrl}}/update-atm-data", "host": ["{{baseUrl}}"], "path": ["update-atm-data"] },
+            "description": "Bulk-update ATM data from Excel file."
+          }
+        },
+        {
+          "name": "Bulk Upload (General)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": "", "description": "Excel file (.xlsx)" }]
+            },
+            "url": { "raw": "{{baseUrl}}/bulk-upload", "host": ["{{baseUrl}}"], "path": ["bulk-upload"] },
+            "description": "General bulk upload endpoint."
+          }
+        },
+        {
+          "name": "Convert RTSP",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rtspUrl\": \"rtsp://example.com/stream\",\n  \"atmId\": \"ATMID001\",\n  \"cameraId\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/convert-rtsp", "host": ["{{baseUrl}}"], "path": ["convert-rtsp"] },
+            "description": "Starts FFmpeg to convert an RTSP stream to HLS (.m3u8)."
+          }
+        }
+      ]
+    }
+
+  ]
+}

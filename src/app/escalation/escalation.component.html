@@ -1,0 +1,124 @@
+<div class="container">
+    <div class="header">
+        <app-header [heading]="'Escalation Matrix'"></app-header>
+    </div>
+
+    <div class="main-container">
+        <div class="side-nav">
+            <app-sidebar></app-sidebar>
+        </div>
+
+        <div class="main">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Hitachi Command Centre Escalation Matrix</h3>
+                </div>
+
+                <div class="card-body">
+                    <div class="d-flex justify-content-end mb-2">
+                        <button class="btn btn-info btn-sm" (click)="downloadExcel()">Download Excel</button>
+                    </div>
+                    <div class="d-flex justify-content-end mb-3" *ngIf="isAdmin()">
+                        <button class="btn btn-outline-primary me-2" (click)="downloadTemplate()">
+                            <i class="fas fa-file-excel"></i> Download Sample Excel
+                        </button>
+
+                        <label class="btn btn-outline-success mb-0">
+                            <i class="fas fa-upload"></i> Upload Excel
+                            <input type="file" hidden (change)="uploadExcel($event)" accept=".xlsx,.xls">
+                        </label>
+                    </div>
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Level</th>
+                                <th>Name</th>
+                                <th>Email ID</th>
+                                <th>Contact No.</th>
+                                <th *ngIf="isAdmin()">Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <!-- Existing Levels -->
+                            <tr *ngFor="let level of escalationMatrix; let i = index">
+                                <td>
+                                    <span *ngIf="!isAdmin()">{{ level.level }}</span>
+                                    <input *ngIf="isAdmin()" type="text" [(ngModel)]="level.level" name="level{{i}}"
+                                        class="form-control" required>
+                                </td>
+
+                                <td>
+                                    <span *ngIf="!isAdmin()">{{ level.name }}</span>
+                                    <input *ngIf="isAdmin()" type="text" [(ngModel)]="level.name" name="name{{i}}"
+                                        class="form-control" required>
+                                </td>
+
+                                <td>
+                                    <span *ngIf="!isAdmin()">{{ level.email }}</span>
+                                    <input *ngIf="isAdmin()" type="email" [(ngModel)]="level.email" name="email{{i}}"
+                                        class="form-control" required email>
+                                    <div class="text-danger"
+                                        *ngIf="isAdmin() && level.email && !isValidEmail(level.email)">
+                                        Enter a valid email
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <span *ngIf="!isAdmin()">{{ level.contact }}</span>
+                                    <input *ngIf="isAdmin()" type="text" [(ngModel)]="level.contact" name="contact{{i}}"
+                                        class="form-control" maxlength="10" minlength="10" pattern="^[0-9]*$"
+                                        (keypress)="allowNumbersOnly($event)">
+                                    <div class="text-danger"
+                                        *ngIf="isAdmin() && level.contact && !isValidContact(level.contact)">
+                                        Enter a 10-digit numeric contact
+                                    </div>
+                                </td>
+
+                                <td *ngIf="isAdmin()">
+                                    <button class="btn btn-success btn-sm" (click)="saveLevel(level)">Save</button>
+                                    <button class="btn btn-danger btn-sm" (click)="deleteLevel(level)">Delete</button>
+                                </td>
+
+                            </tr>
+
+                            <!-- Add New Level (Admin Only) -->
+                            <tr *ngIf="isAdmin()">
+                                <td><input type="text" [(ngModel)]="newLevel.level" name="newLevel" class="form-control"
+                                        placeholder="Level" required></td>
+                                <td><input type="text" [(ngModel)]="newLevel.name" name="newName" class="form-control"
+                                        placeholder="Name" required></td>
+                                <td>
+                                    <input type="email" [(ngModel)]="newLevel.email" name="newEmail"
+                                        class="form-control" placeholder="Email" required>
+                                    <div class="text-danger" *ngIf="newLevel.email && !isValidEmail(newLevel.email)">
+                                        Enter a valid email
+                                    </div>
+                                </td>
+                                <td>
+                                    <input type="text" [(ngModel)]="newLevel.contact" name="newContact"
+                                        class="form-control" placeholder="Contact" maxlength="10" minlength="10"
+                                        pattern="^[0-9]*$" (keypress)="allowNumbersOnly($event)">
+                                    <div class="text-danger"
+                                        *ngIf="newLevel.contact && !isValidContact(newLevel.contact)">
+                                        Enter a 10-digit numeric contact
+                                    </div>
+                                </td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm" (click)="addLevel()">Add</button>
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        Powered by <span class="build">Build</span> <span class="int">INT</span>
+    </footer>
+</div>

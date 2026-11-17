@@ -1,0 +1,29 @@
+# Dependencies and generated build output
+node_modules/
+.angular/
+dist/
+dist-*/
+
+# Local configuration and credentials
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Uploaded, temporary, and generated local data
+uploads/
+**/uploads/
+tmp/
+outputs/
+.codex-sheet-analysis/
+.tmp-sbi-dashboard
+*.log
+
+# Local archives, exports, and spreadsheet data
+*.tar.gz
+*.zip
+*.xlsx
+
+# Operating system metadata
+.DS_Store
+Thumbs.db

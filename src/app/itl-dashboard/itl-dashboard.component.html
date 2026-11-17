@@ -1,0 +1,180 @@
+<div class="container">
+    <div class="header">
+      <app-header [heading]="'Dashboard'"></app-header>
+    </div>
+  </div>
+  
+  <div class="main-container">
+    <div class="side-nav">
+      <app-sidebar></app-sidebar>
+    </div>
+    <div class="main">
+      <div class="row">
+        <!-- Card 1 -->
+        <div class="card">
+          <div class="card-body">
+            <div class="card-content">
+              <h4 class="card-title">Total Locations</h4>
+              <div class="card-info">
+                <p class="card-count">{{ totalLocations }}</p>
+                <i class="fas fa-map-marker-alt total-icon"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Card 2 -->
+        <div class="card">
+          <div class="card-body">
+            <div class="card-content">
+              <h4 class="card-title">Online</h4>
+              <div class="card-info">
+                <p class="card-count">
+                  <span *ngIf="loadingTotals" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  <span *ngIf="!loadingTotals">{{ totalOnline }}</span>
+                </p>
+                <i class="fas fa-map-marker-alt online-icon"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Card 3 -->
+        <div class="card">
+          <div class="card-body">
+            <div class="card-content">
+              <h4 class="card-title">Offline</h4>
+              <div class="card-info">
+                <p class="card-count">
+                  <span *ngIf="loadingTotals" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  <span *ngIf="!loadingTotals">{{ totalOffline }}</span>
+                </p>
+                <i class="fas fa-map-marker-alt offline-icon"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <div class="row align-items-center">
+        <div class="col heading-title">
+          <h4>LHO Wise List</h4>
+        </div>
+        <div class="col heading-actions text-right">
+          <!-- Updated Search input for ATM ID -->
+          <input type="text" [(ngModel)]="searchTerm" (input)="filterAtmList()" placeholder="Search for ATM ID..." />
+          <!-- Autocomplete suggestions for ATM -->
+          <ul *ngIf="filteredAtmList.length > 0" class="autocomplete-list">
+            <li *ngFor="let atm of filteredAtmList" (click)="selectAtm(atm)">
+              {{ atm }}
+            </li>
+          </ul>
+        </div>
+      </div>
+  
+      <!-- Spinner for loading state -->
+      <div *ngIf="loading" class="spinner-container">
+        <div class="spinner-border" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+      </div>
+  
+      <!-- Table content -->
+      <div class="row" *ngIf="!loading">
+        <div class="card1">
+          <div class="card-body">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>LHO</th>
+                  <th>Total Locations</th>
+                  <th>Online</th>
+                  <th>Offline</th>
+                  <th>Percentage</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let lho of filteredLhoList" class="clickable-row" (click)="navigateToSiteDetails(lho)">
+                  <td>{{ lho.LHO_Name }}</td>
+                  <td>{{ lho.total_locations }}</td>
+                  <td>
+                    <span *ngIf="lho.onlineCount !== undefined; else loading">
+                      {{ lho.onlineCount }}
+                    </span>
+                    <ng-template #loading>
+                      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    </ng-template>
+                  </td>
+                  <td>
+                    <span *ngIf="lho.offlineCount !== undefined; else loading">
+                      {{ lho.offlineCount }}
+                    </span>
+                    <ng-template #loading>
+                      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    </ng-template>
+                  </td>
+                  <td>
+                    <span *ngIf="lho.percentage !== undefined; else loading">{{ lho.percentage }}%</span>
+                    <ng-template #loading>
+                      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    </ng-template>
+                  </td>
+                </tr>
+                <tr *ngIf="filteredLhoList.length === 0">
+                  <td colspan="5">No LHO records found</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+  
+      <div class="row" *ngIf="!loading">
+        <div class="col text-right add-button-container" *ngIf="userRole !== 'User'">
+          <button class="btn btn-success" (click)="openModal()">Add</button>
+        </div>
+      </div>
+  
+      <footer class="footer" *ngIf="!loading">
+        Powered by
+        <span class="build">Build</span>
+        <span class="int">INT</span>
+      </footer>
+    </div>
+  </div>
+  
+  <!-- Modal Structure -->
+  <div class="modal" tabindex="-1" role="dialog" [ngClass]="{ 'show d-block': showModal }" (click)="closeModal()">
+    <div class="modal-dialog" role="document" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add LHO</h5>
+          <button type="button" class="close" (click)="closeModal()" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form (submit)="saveLho()">
+            <div class="input-group">
+              <input
+                type="text"
+                class="form-control"
+                id="lhoName"
+                placeholder="Enter LHO Name"
+                [(ngModel)]="lhoName"
+                name="lhoName"
+                (keyup.enter)="saveLho()"
+              />
+              <div class="input-group-append">
+                <button type="button" class="btn btn-secondary" (click)="clearInput()">Clear</button>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" (click)="closeModal()">Close</button>
+          <button type="button" class="btn btn-primary" (click)="saveLho()">Add LHO</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  

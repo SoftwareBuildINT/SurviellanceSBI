@@ -1,0 +1,237 @@
+<div class="container">
+  <div class="header">
+    <app-header [heading]="'Dashboard'"></app-header>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="side-nav">
+    <app-sidebar></app-sidebar>
+  </div>
+  <div class="main">
+    <div class="live-refresh-notice" *ngIf="liveDataRefreshing || liveDataError" role="status">
+      <span class="refresh-indicator" [class.failed]="liveDataError" aria-hidden="true">
+        <svg *ngIf="liveDataRefreshing" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7"></circle></svg>
+        <span *ngIf="liveDataError">!</span>
+      </span>
+      <span *ngIf="liveDataRefreshing">Refreshing live vendor data<span *ngIf="lhoList.length">; showing the latest saved summary meanwhile</span>…</span>
+      <span *ngIf="liveDataError && hasLiveLhoDetails">Live data could not be refreshed. Showing the last successful live results.</span>
+      <span *ngIf="liveDataError && !hasLiveLhoDetails">Live data could not be refreshed. Showing the latest saved summary.</span>
+    </div>
+
+    <div class="row stats-container">
+      <!-- Card 1: Total Locations -->
+      <div class="card total-card" (click)="openCardMenu = null">
+        <div class="card-body">
+          <div class="card-export-menu" (click)="$event.stopPropagation()">
+            <button class="card-menu-toggle" type="button" title="Export options" aria-label="Export total locations"
+              [attr.aria-expanded]="openCardMenu === 'total'" [disabled]="loadingTotals || exportingCard !== null"
+              (click)="toggleCardMenu('total', $event)">
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="card-menu-panel" *ngIf="openCardMenu === 'total'">
+              <button type="button" title="Download Total Locations Excel" aria-label="Download Total Locations Excel"
+                (click)="downloadLocationExcel('total')">
+                <span *ngIf="exportingCard === 'total'" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                <i *ngIf="exportingCard !== 'total'" class="fas fa-file-excel"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-content">
+            <h4 class="card-title">Total Locations</h4>
+            <div class="card-info">
+              <p class="card-count">
+                <span *ngIf="loadingTotals" class="spinner-border spinner-border-sm" role="status"
+                  aria-hidden="true"></span>
+                <span *ngIf="!loadingTotals">{{ totalLocations }}</span>
+              </p>
+              <i class="fas fa-map-marker-alt total-icon"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Online -->
+      <div class="card online-card" (click)="openCardMenu = null">
+        <div class="card-body">
+          <div class="card-export-menu" (click)="$event.stopPropagation()">
+            <button class="card-menu-toggle" type="button" title="Export options" aria-label="Export online locations"
+              [attr.aria-expanded]="openCardMenu === 'online'" [disabled]="loadingTotals || exportingCard !== null"
+              (click)="toggleCardMenu('online', $event)">
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="card-menu-panel" *ngIf="openCardMenu === 'online'">
+              <button type="button" title="Download Online Locations Excel" aria-label="Download Online Locations Excel"
+                (click)="downloadLocationExcel('online')">
+                <span *ngIf="exportingCard === 'online'" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                <i *ngIf="exportingCard !== 'online'" class="fas fa-file-excel"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-content">
+            <h4 class="card-title">Online</h4>
+            <div class="card-info">
+              <p class="card-count">
+                <span *ngIf="loadingTotals" class="spinner-border spinner-border-sm" role="status"
+                  aria-hidden="true"></span>
+                <span *ngIf="!loadingTotals">{{ totalOnline }}</span>
+                <!-- <span *ngIf="!loadingTotals">5034</span> -->
+              </p>
+              <i class="fas fa-map-marker-alt online-icon"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Offline -->
+      <div class="card offline-card" (click)="openCardMenu = null">
+        <div class="card-body">
+          <div class="card-export-menu" (click)="$event.stopPropagation()">
+            <button class="card-menu-toggle" type="button" title="Export options" aria-label="Export offline locations"
+              [attr.aria-expanded]="openCardMenu === 'offline'" [disabled]="loadingTotals || exportingCard !== null"
+              (click)="toggleCardMenu('offline', $event)">
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="card-menu-panel" *ngIf="openCardMenu === 'offline'">
+              <button type="button" title="Download Offline Locations Excel" aria-label="Download Offline Locations Excel"
+                (click)="downloadLocationExcel('offline')">
+                <span *ngIf="exportingCard === 'offline'" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                <i *ngIf="exportingCard !== 'offline'" class="fas fa-file-excel"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-content">
+            <h4 class="card-title">Offline</h4>
+            <div class="card-info">
+              <p class="card-count">
+                <span *ngIf="loadingTotals" class="spinner-border spinner-border-sm" role="status"
+                  aria-hidden="true"></span>
+                <span *ngIf="!loadingTotals">{{ totalOffline }}</span>
+                <!-- <span *ngIf="!loadingTotals">368</span> -->
+              </p>
+              <i class="fas fa-map-marker-alt offline-icon"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <section class="dashboard-section-header">
+      <div class="dashboard-section-top">
+        <div class="heading-title">
+        <h4>LHO Wise List</h4>
+        </div>
+        <div class="heading-actions">
+          <!-- Updated Search input for ATM ID -->
+          <input type="text" [ngModel]="searchTerm" (ngModelChange)="searchTerm = $event; filterAtmList()"
+            placeholder="Search for ATM ID..." />
+          <!-- Autocomplete suggestions for ATM -->
+          <ul *ngIf="filteredAtmList.length > 0" class="autocomplete-list">
+            <li *ngFor="let atm of filteredAtmList" (click)="selectAtm(atm)">
+              {{ atm }}
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="dashboard-section-actions">
+        <button *ngIf="userRole !== 3" class="btn btn-success add-lho-button" (click)="openModal()">+ Add LHO</button>
+        <button *ngIf="!loadingTotals" class="btn btn-success download-excel-button" (click)="downloadExcel()">Download Excel</button>
+      </div>
+    </section>
+
+    <!-- Spinner for loading state -->
+    <!-- <div *ngIf="loading" class="spinner-container">
+      <div class="spinner-border" role="status">
+        <span class="sr-only">Loading...</span>
+      </div>
+    </div> -->
+
+    <!-- Table content -->
+    <div class="row">
+      <div class="card1">
+        <div class="card-body">
+          <!-- Spinner while loading -->
+          <div *ngIf="loadingTotals" class="text-center py-5">
+            <div class="spinner-border" role="status">
+              <span class="sr-only">Loading...</span>
+            </div>
+            <p>Loading LHO data...</p>
+          </div>
+
+          <!-- Table content after loading -->
+          <div *ngIf="!loadingTotals">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>LHO</th>
+                  <th>Total Locations</th>
+                  <th>Online</th>
+                  <th>Offline</th>
+                  <th>Percentage</th>
+                  <th *ngIf="userRole === 1">Actions</th> <!-- Only show for Admin/Sub-Admin -->
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let lho of filteredLhoList" class="clickable-row" (click)="navigateToSiteDetails(lho)">
+                  <td>{{ lho.LHO_Name }}</td>
+                  <td>{{ lho.total_locations }}</td>
+                  <td>{{ lho.onlineCount }}</td>
+                  <td>{{ lho.offlineCount }}</td>
+                  <td [style.--progress-width.%]="lho.percentage">{{ lho.percentage }}%</td>
+                  <td *ngIf="userRole === 1" (click)="$event.stopPropagation()"> <!-- Only admin -->
+                    <button class="btn btn-sm btn-primary" (click)="openModal(lho); $event.stopPropagation()">Edit</button>
+                    <button class="btn btn-sm btn-danger" (click)="deleteLho(lho); $event.stopPropagation()">Delete</button>
+                  </td>
+                </tr>
+
+                <tr *ngIf="!loadingTotals && filteredLhoList.length === 0">
+                  <td colspan="6" class="text-center">No LHO records found</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <footer class="footer" *ngIf="!loading">
+      Powered by
+      <span class="build">Build</span>
+      <span class="int">INT</span>
+    </footer>
+  </div>
+</div>
+
+<!-- Modal Structure -->
+<!-- Modal Structure (used for both Add and Edit) -->
+<div class="modal" tabindex="-1" role="dialog" [ngClass]="{ 'show d-block': showModal }" (click)="closeModal()">
+  <div class="modal-dialog" role="document" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ selectedLho ? 'Edit LHO' : 'Add LHO' }}</h5>
+        <button type="button" class="close" (click)="closeModal()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form (submit)="saveLho()">
+          <div class="input-group">
+            <input type="text" class="form-control" id="lhoName" placeholder="Enter LHO Name" [(ngModel)]="lhoName"
+              name="lhoName" (keyup.enter)="saveLho()" />
+            <div class="input-group-append">
+              <button type="button" class="btn btn-secondary" (click)="clearInput()">Clear</button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" (click)="closeModal()">Close</button>
+        <button type="button" class="btn btn-primary" (click)="saveLho()">
+          {{ selectedLho ? 'Update LHO' : 'Add LHO' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
